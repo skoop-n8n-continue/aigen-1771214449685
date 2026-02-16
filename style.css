@@ -5,39 +5,58 @@ body {
     align-items: center;
     height: 100vh;
     margin: 0;
+    padding: 0 50px; /* Requested 50px padding on both sides */
+    box-sizing: border-box;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: white;
+    overflow: hidden; /* Prevent scrollbars */
 }
 
 .clock-container {
     text-align: center;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .date-text {
-    font-size: 1.5rem;
+    font-size: 3.5vw; /* Responsive font size */
     font-weight: 300;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.5em;
     opacity: 0.9;
+    white-space: nowrap;
 }
 
 .time-text {
-    font-size: 4rem;
+    font-size: 12vw; /* Large responsive font size to fill width */
     font-weight: 700;
-    letter-spacing: 2px;
+    line-height: 1;
+    white-space: nowrap; /* Prevent wrapping */
+    letter-spacing: -0.03em; /* Tighten for large text */
 }
 
 .status-text {
-    font-size: 0.8rem;
-    margin-top: 1rem;
+    font-size: 1.2vw;
+    margin-top: 2rem;
     opacity: 0.6;
     transition: opacity 0.5s ease;
+    position: absolute;
+    bottom: 20px;
 }
 
 @media (max-width: 600px) {
+    body {
+        padding: 0 20px; /* Reduce padding on small screens to prevent overflow */
+    }
     .date-text {
-        font-size: 1.2rem;
+        font-size: 5vw;
     }
     .time-text {
-        font-size: 3rem;
+        font-size: 14vw;
+    }
+    .status-text {
+        font-size: 3vw;
     }
 }
