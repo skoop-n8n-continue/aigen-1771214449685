@@ -1,5 +1,12 @@
 body {
+    /* Teal fallback */
     background-color: teal;
+    /* Background image with dark overlay for readability */
+    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://skoop-general.s3.us-east-1.amazonaws.com/n8n_image_gen%2Fscenic_background-1771215837530.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    
     display: flex;
     justify-content: center;
     align-items: center;
@@ -10,6 +17,7 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: white;
     overflow: hidden; /* Prevent scrollbars */
+    text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.8); /* Strong shadow for readability against scenic background */
 }
 
 .clock-container {
@@ -25,7 +33,7 @@ body {
     font-size: 3.5vw; /* Responsive font size */
     font-weight: 300;
     margin-bottom: 0.5em;
-    opacity: 0.9;
+    opacity: 0.95;
     white-space: nowrap;
 }
 
@@ -40,7 +48,7 @@ body {
 .status-text {
     font-size: 1.2vw;
     margin-top: 2rem;
-    opacity: 0.6;
+    opacity: 0.7;
     transition: opacity 0.5s ease;
     position: absolute;
     bottom: 20px;
