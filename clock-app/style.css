@@ -1,0 +1,42 @@
+body {
+    background-color: teal;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: white;
+}
+
+.clock-container {
+    text-align: center;
+}
+
+.date-text {
+    font-size: 1.5rem;
+    font-weight: 300;
+    margin-bottom: 0.5rem;
+    opacity: 0.9;
+}
+
+.time-text {
+    font-size: 4rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.status-text {
+    font-size: 0.8rem;
+    margin-top: 1rem;
+    opacity: 0.6;
+}
+
+@media (max-width: 600px) {
+    .date-text {
+        font-size: 1.2rem;
+    }
+    .time-text {
+        font-size: 3rem;
+    }
+}
