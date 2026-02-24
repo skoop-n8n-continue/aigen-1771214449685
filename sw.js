@@ -1,16 +1,14 @@
-const CACHE_NAME = 'clock-app-v3';
+const CACHE_NAME = 'clock-app-v4';
 const ASSETS_TO_CACHE = [
-  './',
   './index.html',
   './style.css',
   './script.js',
-  './manifest.json',
-  'https://skoop-general.s3.us-east-1.amazonaws.com/n8n_image_gen%2Fscenic_background-1771215837530.png',
-  'https://placehold.co/192x192/008080/ffffff?text=Clock',
-  'https://placehold.co/512x512/008080/ffffff?text=Clock'
+  './manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
+  // Force the waiting service worker to become the active service worker
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('Opened cache');
@@ -29,11 +27,19 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
+    }).then(() => {
+      // Take control of all clients immediately
+      return self.clients.claim();
     })
   );
 });
 
 self.addEventListener('fetch', (event) => {
+  // Skip caching for time APIs to ensure we always get fresh time data
+  if (event.request.url.includes('timeapi.io') || event.request.url.includes('worldtimeapi.org')) {
+    return; // Fallback to network only
+  }
+
   event.respondWith(
     caches.match(event.request, { ignoreSearch: true }).then((response) => {
       // Cache hit - return response
