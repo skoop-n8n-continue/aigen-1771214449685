@@ -1,9 +1,15 @@
-const CACHE_NAME = 'clock-app-v4';
-const ASSETS_TO_CACHE = [
+const CACHE_NAME = 'clock-app-v7';
+const CORE_ASSETS = [
   './index.html',
   './style.css',
   './script.js',
   './manifest.json'
+];
+
+const OPTIONAL_ASSETS = [
+  'https://skoop-general.s3.us-east-1.amazonaws.com/n8n_image_gen%2Fscenic_background-1771215837530.png',
+  'https://placehold.co/192x192/008080/ffffff?text=Clock',
+  'https://placehold.co/512x512/008080/ffffff?text=Clock'
 ];
 
 self.addEventListener('install', (event) => {
@@ -12,7 +18,19 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('Opened cache');
-      return cache.addAll(ASSETS_TO_CACHE);
+      // Cache core assets first - these MUST succeed
+      return cache.addAll(CORE_ASSETS)
+        .then(() => {
+          // Try to cache optional assets (images) but don't fail installation if they fail
+          // Use no-cors to handle opaque responses (cross-origin images)
+          const optionalCaching = OPTIONAL_ASSETS.map(url => {
+            const req = new Request(url, { mode: 'no-cors' });
+            return fetch(req)
+              .then(response => cache.put(req, response))
+              .catch(err => console.warn('Failed to cache optional asset:', url, err));
+          });
+          return Promise.all(optionalCaching);
+        });
     })
   );
 });
@@ -47,16 +65,14 @@ self.addEventListener('fetch', (event) => {
         return response;
       }
 
-      // Clone the request because it's a stream
       const fetchRequest = event.request.clone();
 
       return fetch(fetchRequest).then((response) => {
         // Check if we received a valid response
-        if (!response || response.status !== 200 && response.type !== 'opaque') {
+        if (!response || (response.status !== 200 && response.type !== 'opaque')) {
           return response;
         }
 
-        // Clone the response because it's a stream
         const responseToCache = response.clone();
 
         caches.open(CACHE_NAME).then((cache) => {
