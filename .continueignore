@@ -1,16 +1,4 @@
 # System/Config files
-config.yaml
-.prompt.txt
-.planning_prompt.txt
-.agent_prompt.txt
-.plan.md
-.tui_input.txt
-.run_continue.sh
-.run_continue_tui.sh
-
-# Continue.dev internal
-.continue/
-
 # Version control
 .git/
 .gitignore
@@ -23,13 +11,3 @@ node_modules/
 dist/
 build/
 out/
-
-# OS files
-.DS_Store
-Thumbs.db
-*.log
-
-# Temporary files
-*.tmp
-*.temp
-.cache/

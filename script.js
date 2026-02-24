@@ -1,4 +1,4 @@
-let timeOffset = 0; // Difference between server time and local time in ms
+let timeOffset = parseInt(localStorage.getItem('clockTimeOffset') || '0'); // Difference between server time and local time in ms
 const dateElement = document.getElementById('date');
 const timeElement = document.getElementById('time');
 const statusElement = document.getElementById('status');
@@ -8,6 +8,12 @@ function hideStatus() {
     setTimeout(function() {
         statusElement.style.opacity = '0';
     }, 3000);
+}
+
+// Function to save offset
+function saveOffset(offset) {
+    timeOffset = offset;
+    localStorage.setItem('clockTimeOffset', offset.toString());
 }
 
 // Function to fetch time from an online source
@@ -25,10 +31,11 @@ async function syncTime() {
             const serverTime = new Date(data.dateTime + 'Z').getTime();
             
             // Calculate offset. Date.now() is UTC based.
-            timeOffset = serverTime - Date.now();
+            const newOffset = serverTime - Date.now();
+            saveOffset(newOffset);
             
             statusElement.textContent = 'Synced with timeapi.io';
-            console.log('Time synced with timeapi.io. Offset:', timeOffset);
+            console.log('Time synced with timeapi.io. Offset:', newOffset);
             hideStatus();
             return;
         }
@@ -42,10 +49,11 @@ async function syncTime() {
         if (response.ok) {
             const data = await response.json();
             const serverTime = new Date(data.datetime).getTime();
-            timeOffset = serverTime - Date.now();
+            const newOffset = serverTime - Date.now();
+            saveOffset(newOffset);
             
             statusElement.textContent = 'Synced with WorldTimeAPI';
-            console.log('Time synced with WorldTimeAPI. Offset:', timeOffset);
+            console.log('Time synced with WorldTimeAPI. Offset:', newOffset);
             hideStatus();
             return;
         }
@@ -53,10 +61,14 @@ async function syncTime() {
         console.warn('Secondary sync failed (WorldTimeAPI):', e);
     }
 
-    // Fallback: Use System Time
-    console.error('All time syncs failed. Using local system time.');
-    statusElement.textContent = 'Sync failed. Using system time.';
-    timeOffset = 0;
+    // Fallback: Use Cached Offset or System Time
+    if (timeOffset !== 0) {
+        console.warn('Sync failed. Using cached offset.');
+        statusElement.textContent = 'Sync failed. Using cached time.';
+    } else {
+        console.error('All time syncs failed and no cache. Using local system time.');
+        statusElement.textContent = 'Sync failed. Using system time.';
+    }
     hideStatus();
 }
 
