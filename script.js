@@ -17,7 +17,11 @@ function saveOffset(offset) {
 }
 
 // Function to fetch time from an online source
+let isSyncing = false;
 async function syncTime() {
+    if (isSyncing) return;
+    isSyncing = true;
+    
     statusElement.style.opacity = '1';
     statusElement.textContent = 'Syncing time...';
     
@@ -37,6 +41,7 @@ async function syncTime() {
             statusElement.textContent = 'Synced with timeapi.io';
             console.log('Time synced with timeapi.io. Offset:', newOffset);
             hideStatus();
+            isSyncing = false;
             return;
         }
     } catch (e) {
@@ -55,6 +60,7 @@ async function syncTime() {
             statusElement.textContent = 'Synced with WorldTimeAPI';
             console.log('Time synced with WorldTimeAPI. Offset:', newOffset);
             hideStatus();
+            isSyncing = false;
             return;
         }
     } catch (e) {
@@ -70,6 +76,7 @@ async function syncTime() {
         statusElement.textContent = 'Sync failed. Using system time.';
     }
     hideStatus();
+    isSyncing = false;
 }
 
 // Function to get ordinal suffix for date
@@ -123,3 +130,16 @@ setInterval(updateClock, 1000);
 
 // Resync every hour to keep accuracy
 setInterval(syncTime, 3600000);
+
+// Listen for network status changes
+window.addEventListener('online', () => {
+    console.log('Network connection restored. Re-syncing time...');
+    syncTime();
+});
+
+window.addEventListener('offline', () => {
+    console.log('Network connection lost.');
+    statusElement.style.opacity = '1';
+    statusElement.textContent = 'Offline. Using cached time.';
+    hideStatus();
+});
