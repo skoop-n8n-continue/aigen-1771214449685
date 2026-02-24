@@ -1,10 +1,13 @@
-const CACHE_NAME = 'clock-app-v2';
+const CACHE_NAME = 'clock-app-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './style.css',
   './script.js',
-  'https://skoop-general.s3.us-east-1.amazonaws.com/n8n_image_gen%2Fscenic_background-1771215837530.png'
+  './manifest.json',
+  'https://skoop-general.s3.us-east-1.amazonaws.com/n8n_image_gen%2Fscenic_background-1771215837530.png',
+  'https://placehold.co/192x192/008080/ffffff?text=Clock',
+  'https://placehold.co/512x512/008080/ffffff?text=Clock'
 ];
 
 self.addEventListener('install', (event) => {
