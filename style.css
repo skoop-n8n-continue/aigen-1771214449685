@@ -1,8 +1,8 @@
 body {
-    /* Teal fallback */
-    background-color: teal;
+    /* Red fallback */
+    background-color: #8B0000;
     /* Background image with dark overlay for readability */
-    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://skoop-general.s3.us-east-1.amazonaws.com/n8n_image_gen%2Fscenic_background-1771215837530.png?v=x7k2m9');
+    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://skoop-general.s3.us-east-1.amazonaws.com/n8n_image_gen%2Fscenic_background-1771215837530.png?v=r3d4z2');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
