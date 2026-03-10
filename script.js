@@ -27,7 +27,7 @@ async function syncTime() {
     
     // Try Primary Source: timeapi.io (UTC)
     try {
-        const response = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=Etc/UTC');
+        const response = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=Etc/UTC', { cache: 'no-store' });
         if (response.ok) {
             const data = await response.json();
             // timeapi.io returns dateTime like "2026-02-16T04:12:47.6874662"
@@ -50,7 +50,7 @@ async function syncTime() {
 
     // Try Secondary Source: WorldTimeAPI
     try {
-        const response = await fetch('https://worldtimeapi.org/api/ip');
+        const response = await fetch('https://worldtimeapi.org/api/ip', { cache: 'no-store' });
         if (response.ok) {
             const data = await response.json();
             const serverTime = new Date(data.datetime).getTime();
