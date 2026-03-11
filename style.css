@@ -38,7 +38,7 @@ body {
 }
 
 .time-text {
-    font-size: 14vw; /* Slightly larger since date is gone */
+    font-size: 12vw; /* Large responsive font size to fill width */
     font-weight: 700;
     line-height: 1;
     white-space: nowrap; /* Prevent wrapping */
@@ -62,7 +62,7 @@ body {
         font-size: 5vw;
     }
     .time-text {
-        font-size: 16vw;
+        font-size: 14vw;
     }
     .status-text {
         font-size: 3vw;

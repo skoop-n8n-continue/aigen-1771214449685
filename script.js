@@ -1,4 +1,5 @@
 let timeOffset = parseInt(localStorage.getItem('clockTimeOffset') || '0'); // Difference between server time and local time in ms
+const dateElement = document.getElementById('date');
 const timeElement = document.getElementById('time');
 const statusElement = document.getElementById('status');
 
@@ -93,18 +94,30 @@ function getOrdinalSuffix(day) {
 function updateClock() {
     // Apply offset to current system time to get "real" time
     const now = new Date(Date.now() + timeOffset);
-
-    // Format Time: "2:35:12 PM"
+    
+    // Format Date: "February 5th, 2026"
+    const months = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+    const month = months[now.getMonth()];
+    const day = now.getDate();
+    const year = now.getFullYear();
+    const suffix = getOrdinalSuffix(day);
+    
+    dateElement.textContent = month + ' ' + day + suffix + ', ' + year;
+    
+    // Format Time: "2:35 PM"
     let hours = now.getHours();
     const minutes = now.getMinutes();
     const seconds = now.getSeconds();
     const ampm = hours >= 12 ? 'PM' : 'AM';
-
+    
     hours = hours % 12;
     hours = hours ? hours : 12; // the hour '0' should be '12'
     const minutesStr = minutes < 10 ? '0' + minutes : minutes;
     const secondsStr = seconds < 10 ? '0' + seconds : seconds;
-
+    
     timeElement.textContent = hours + ':' + minutesStr + ':' + secondsStr + ' ' + ampm;
 }
 
