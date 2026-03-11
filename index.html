@@ -4,17 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clock App</title>
-    <link rel="stylesheet" href="style.css?v=r3d4z2">
-    <meta name="theme-color" content="#8B0000">
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#008080">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
 </head>
 <body>
     <div class="clock-container">
+        <div id="date" class="date-text">Loading date...</div>
         <div id="time" class="time-text">Loading time...</div>
         <div id="status" class="status-text">Syncing time...</div>
     </div>
-    <script src="script.js?v=r3d4z2"></script>
+    <script src="script.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // Register service worker with explicit relative path
+                // Ensure sw.js is in the same directory as index.html
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(err => {
+                        console.error('ServiceWorker registration failed: ', err);
+                        console.error('Make sure sw.js is uploaded to the same directory as index.html');
+                    });
+            });
+        }
+    </script>
 </body>
 </html>
