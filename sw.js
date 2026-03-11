@@ -1,86 +1,148 @@
-const CACHE_NAME = 'clock-app-v8';
-const CORE_ASSETS = [
-  './index.html',
-  './style.css',
-  './script.js',
-  './manifest.json'
+'use strict';
+
+const CACHE_NAME = 'skoop-app-aigen-1771214449685';
+
+const NETWORK_ONLY_HOSTS = [
+  'timeapi.io',
+  'worldtimeapi.org',
+  'api.openweathermap.org',
+  'openweathermap.org',
+  'api.weatherapi.com',
+  'wttr.in',
 ];
 
-const OPTIONAL_ASSETS = [
-  'https://skoop-general.s3.us-east-1.amazonaws.com/n8n_image_gen%2Fscenic_background-1771215837530.png',
-  'https://placehold.co/192x192/008080/ffffff?text=Clock',
-  'https://placehold.co/512x512/008080/ffffff?text=Clock'
-];
+function isNetworkOnly(url) {
+  try {
+    const host = new URL(url).hostname;
+    return NETWORK_ONLY_HOSTS.some(h => host.includes(h));
+  } catch (_) {
+    return false;
+  }
+}
 
-self.addEventListener('install', (event) => {
-  // Force the waiting service worker to become the active service worker
+function isIndexHtml(url) {
+  try {
+    const u = new URL(url);
+    return u.pathname === '/' || u.pathname.endsWith('/index.html');
+  } catch (_) {
+    return false;
+  }
+}
+
+function hasRefreshParam(url) {
+  try {
+    return new URL(url).searchParams.get('refresh') === 'true';
+  } catch (_) {
+    return false;
+  }
+}
+
+function normalizeUrl(url) {
+  try {
+    const u = new URL(url);
+    u.searchParams.delete('refresh');
+    u.searchParams.delete('ts');
+    return u.toString();
+  } catch (_) {
+    return url;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Install — pre-cache index.html only. All other assets are cached on first fetch.
+// ---------------------------------------------------------------------------
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.add('./index.html')).catch(() => {})
+  );
   self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('Opened cache');
-      // Cache core assets first - these MUST succeed
-      return cache.addAll(CORE_ASSETS)
-        .then(() => {
-          // Try to cache optional assets (images) but don't fail installation if they fail
-          // Use no-cors to handle opaque responses (cross-origin images)
-          const optionalCaching = OPTIONAL_ASSETS.map(url => {
-            const req = new Request(url, { mode: 'no-cors' });
-            return fetch(req)
-              .then(response => cache.put(req, response))
-              .catch(err => console.warn('Failed to cache optional asset:', url, err));
-          });
-          return Promise.all(optionalCaching);
-        });
-    })
-  );
 });
 
-self.addEventListener('activate', (event) => {
+// ---------------------------------------------------------------------------
+// Activate — delete any caches from previous deployments of this app.
+// ---------------------------------------------------------------------------
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => {
-      // Take control of all clients immediately
-      return self.clients.claim();
-    })
+    caches.keys().then(keys =>
+      Promise.all(
+        keys
+          .filter(key => key.startsWith('skoop-app-') && key !== CACHE_NAME)
+          .map(key => caches.delete(key))
+      )
+    )
   );
+  self.clients.claim();
 });
 
-self.addEventListener('fetch', (event) => {
-  // Skip caching for time APIs to ensure we always get fresh time data
-  if (event.request.url.includes('timeapi.io') || event.request.url.includes('worldtimeapi.org')) {
-    return; // Fallback to network only
+// ---------------------------------------------------------------------------
+// Fetch
+//
+// Strategy priority:
+//   1. Non-GET requests            — pass through unchanged
+//   2. Network-only hosts          — always fetch from network, never cache
+//   3. ?refresh=true               — bust cache entry, fetch fresh, re-cache
+//   4. index.html                  — network-first (picks up new deployments)
+//   5. Everything else             — cache-first, fallback to network then cache
+// ---------------------------------------------------------------------------
+self.addEventListener('fetch', event => {
+  const { request } = event;
+
+  if (request.method !== 'GET') return;
+
+  const url = request.url;
+
+  // 1. Network-only (live data APIs — never cache)
+  if (isNetworkOnly(url)) {
+    event.respondWith(fetch(request));
+    return;
   }
 
-  event.respondWith(
-    caches.match(event.request, { ignoreSearch: true }).then((response) => {
-      // Cache hit - return response
-      if (response) {
-        return response;
-      }
-
-      const fetchRequest = event.request.clone();
-
-      return fetch(fetchRequest).then((response) => {
-        // Check if we received a valid response
-        if (!response || (response.status !== 200 && response.type !== 'opaque')) {
-          return response;
+  // 2. ?refresh=true — bust cache entry, fetch fresh, re-cache, return fresh
+  if (hasRefreshParam(url)) {
+    const normalized = normalizeUrl(url);
+    event.respondWith(
+      caches.open(CACHE_NAME).then(async cache => {
+        await cache.delete(normalized);
+        try {
+          const fresh = await fetch(normalized);
+          if (fresh.ok) await cache.put(normalized, fresh.clone());
+          return fresh;
+        } catch (_) {
+          const cached = await cache.match(normalized);
+          return cached || new Response('Offline', { status: 503 });
         }
+      })
+    );
+    return;
+  }
 
-        const responseToCache = response.clone();
+  // 3. index.html — network-first so new deployments are picked up immediately
+  if (isIndexHtml(url)) {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
 
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-
+  // 4. All other assets — cache-first
+  const normalizedUrl = normalizeUrl(url);
+  event.respondWith(
+    caches.open(CACHE_NAME).then(async cache => {
+      const cached = await cache.match(normalizedUrl);
+      if (cached) return cached;
+      try {
+        const response = await fetch(request);
+        if (response.ok) await cache.put(normalizedUrl, response.clone());
         return response;
-      });
+      } catch (_) {
+        return new Response('Offline', { status: 503 });
+      }
     })
   );
 });
