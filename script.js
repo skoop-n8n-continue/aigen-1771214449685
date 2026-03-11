@@ -1,4 +1,5 @@
 let timeOffset = parseInt(localStorage.getItem('clockTimeOffset') || '0'); // Difference between server time and local time in ms
+const dateElement = document.getElementById('date');
 const timeElement = document.getElementById('time');
 const statusElement = document.getElementById('status');
 
@@ -26,14 +27,19 @@ async function syncTime() {
     
     // Try Primary Source: timeapi.io (UTC)
     try {
-        const response = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=Etc/UTC', { cache: 'no-store' });
+        const response = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=Etc/UTC');
         if (response.ok) {
             const data = await response.json();
+            // timeapi.io returns dateTime like "2026-02-16T04:12:47.6874662"
+            // Treat as UTC by appending 'Z'
             const serverTime = new Date(data.dateTime + 'Z').getTime();
+            
+            // Calculate offset. Date.now() is UTC based.
             const newOffset = serverTime - Date.now();
             saveOffset(newOffset);
             
             statusElement.textContent = 'Synced with timeapi.io';
+            console.log('Time synced with timeapi.io. Offset:', newOffset);
             hideStatus();
             isSyncing = false;
             return;
@@ -44,7 +50,7 @@ async function syncTime() {
 
     // Try Secondary Source: WorldTimeAPI
     try {
-        const response = await fetch('https://worldtimeapi.org/api/ip', { cache: 'no-store' });
+        const response = await fetch('https://worldtimeapi.org/api/ip');
         if (response.ok) {
             const data = await response.json();
             const serverTime = new Date(data.datetime).getTime();
@@ -52,6 +58,7 @@ async function syncTime() {
             saveOffset(newOffset);
             
             statusElement.textContent = 'Synced with WorldTimeAPI';
+            console.log('Time synced with WorldTimeAPI. Offset:', newOffset);
             hideStatus();
             isSyncing = false;
             return;
@@ -62,12 +69,25 @@ async function syncTime() {
 
     // Fallback: Use Cached Offset or System Time
     if (timeOffset !== 0) {
-        statusElement.textContent = 'Offline. Using cached time.';
+        console.warn('Sync failed. Using cached offset.');
+        statusElement.textContent = 'Sync failed. Using cached time.';
     } else {
+        console.error('All time syncs failed and no cache. Using local system time.');
         statusElement.textContent = 'Sync failed. Using system time.';
     }
     hideStatus();
     isSyncing = false;
+}
+
+// Function to get ordinal suffix for date
+function getOrdinalSuffix(day) {
+    if (day > 3 && day < 21) return 'th';
+    switch (day % 10) {
+        case 1:  return 'st';
+        case 2:  return 'nd';
+        case 3:  return 'rd';
+        default: return 'th';
+    }
 }
 
 // Function to update the clock display
@@ -75,7 +95,19 @@ function updateClock() {
     // Apply offset to current system time to get "real" time
     const now = new Date(Date.now() + timeOffset);
     
-    // Format Time: "2:35:12 PM"
+    // Format Date: "February 5th, 2026"
+    const months = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+    const month = months[now.getMonth()];
+    const day = now.getDate();
+    const year = now.getFullYear();
+    const suffix = getOrdinalSuffix(day);
+    
+    dateElement.textContent = month + ' ' + day + suffix + ', ' + year;
+    
+    // Format Time: "2:35 PM"
     let hours = now.getHours();
     const minutes = now.getMinutes();
     const seconds = now.getSeconds();
@@ -101,10 +133,12 @@ setInterval(syncTime, 3600000);
 
 // Listen for network status changes
 window.addEventListener('online', () => {
+    console.log('Network connection restored. Re-syncing time...');
     syncTime();
 });
 
 window.addEventListener('offline', () => {
+    console.log('Network connection lost.');
     statusElement.style.opacity = '1';
     statusElement.textContent = 'Offline. Using cached time.';
     hideStatus();
